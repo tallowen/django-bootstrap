@@ -56,7 +56,7 @@ class BootstrapMixin(object):
         """ Render a list of fields and join the fields by the value in separator. """
 
         output = []
-        
+
         for field in fields:
             if isinstance(field, Fieldset):
                 output.append(field.as_html(self))
@@ -120,14 +120,16 @@ class BootstrapMixin(object):
                 'errors' : mark_safe(bf_errors),
                 'field_type' : mark_safe(field.__class__.__name__),
             }
-            
+
+            field_hash.update(self.context)
+
             if self.custom_fields.has_key(field):
                 template = get_template(self.custom_fields[field])
             else:
                 template = select_template([
                     os.path.join(self.template_base, 'field_%s.html' % field_instance.__class__.__name__.lower()),
                     os.path.join(self.template_base, 'field_default.html'), ])
-                
+
             # Finally render the field
             output = template.render(Context(field_hash))
 
@@ -135,6 +137,11 @@ class BootstrapMixin(object):
 
 class BootstrapForm(forms.Form, BootstrapMixin):
     def __init__(self, *args, **kwargs):
+        self.context = {}
+        if 'context' in kwargs:
+            self.context = kwargs['context']
+            del(kwargs['context'])
+
         forms.Form.__init__(self, *args, **kwargs)
         self.__bootstrap__()
 
@@ -147,6 +154,11 @@ class BootstrapForm(forms.Form, BootstrapMixin):
 
 class BootstrapModelForm(forms.ModelForm, BootstrapMixin):
     def __init__(self, *args, **kwargs):
+        self.context = {}
+        if 'context' in kwargs:
+            self.context = kwargs['context']
+            del(kwargs['context'])
+
         forms.ModelForm.__init__(self, *args, **kwargs)
         self.__bootstrap__()
 
@@ -162,7 +174,7 @@ class Fieldset(object):
     def __init__(self, legend, *fields):
         self.legend_html = legend and ('<legend>%s</legend>' % legend) or ''
         self.fields = fields
-    
+
     def as_html(self, form):
         return u'<fieldset>%s%s</fieldset>' %  (self.legend_html, form.render_fields(self.fields), )
-            
+
